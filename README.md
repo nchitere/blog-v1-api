@@ -18,3 +18,5 @@
 
 - Instantiate a basic Hello world flask app
 - flask run to run it locally.
+
+-To run flask in development set FLASK_ENV = development. Turns on the debugger mode that auto updates changes to the flask app

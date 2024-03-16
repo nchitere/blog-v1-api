@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from instance.config import Config
 # import both functions form db.py
-from db import get_blogs, save_blog # new
+from db import get_blogs, save_blog, update_blog # new
 
 
 app = Flask(__name__)
@@ -20,10 +20,10 @@ def post_method():
     data['comments'] = {}
     if data is None:
         return jsonify({'error': 'Invalid JSON data'}), 400  
-    save_blog(data)
+    save_blog(data) # new
     # You will need to regress this line by calling save_blog function
     blogs[data['id']]=data #Accessing dictionary item using key. Time space complexity O(1)
- 
+    print(blogs)
     return jsonify(blogs), 201
 
 @app.route("/blogs", methods =['GET'])
@@ -31,7 +31,7 @@ def get_method():
     return jsonify(blogs), 200
 
 # Where blog_id is the key: blog is the value. And the blog_id is passed in as a integer
-@app.route("/blogs/<int:blog_id>/comments", methods = ['POST'])
+@app.route("/blogs/<string:blog_id>/comments", methods = ['POST'])
 def add_comments(blog_id):
     comment = request.get_json() #This is data from the user/postman
     if not comment:
@@ -51,11 +51,11 @@ def add_comments(blog_id):
     #update the blogs's comments
     blog['comments'] = comments
     # Save the updated blog data
-    save_blog(blog)
+    update_blog(blog) # new
     return jsonify({'message': 'Comment added successfully', 'blog':blog}), 201
 
 
-@app.route("/blogs/<int:blog_id>/comments/<int:comment_id>", methods = ['GET','PUT', 'DELETE'])
+@app.route("/blogs/<string:blog_id>/comments/<string:comment_id>", methods = ['GET','PUT', 'DELETE'])
 def single_comment(blog_id, comment_id):
     # Check if blog exists
     blog = blogs.get(blog_id)
@@ -64,6 +64,8 @@ def single_comment(blog_id, comment_id):
     
     # Retrieve all comments
     comments = blog.get('comments')
+    print(comments)
+    print(comment_id)
     # Check if comment exists 
     comment = comments.get(comment_id)
     if not comment:
@@ -94,7 +96,30 @@ def single_comment(blog_id, comment_id):
         save_blog(blog) # new
         return jsonify({'message': 'Comment updated successfully'}), 200
 
+# End point for getting a specific blog
+@app.route('/blogs/<string:blog_id>', methods=['GET','PUT'])
+def get_blog(blog_id):
+    blog = blogs.get(blog_id)
+    if not blog:
+        return jsonify({'error':'blog does not exist'}), 404
+    # GET method for a specific blog
+    if request.method == 'GET':
+        return jsonify(blog)
 
+    # UPDATE method  for a specific blog
+    if request.method == 'PUT':
+        data = request.get_json()
+        # update title
+        if 'title' in data:
+            updated_title = data['title']
+            blog['title'] = updated_title
+
+            # Return the updated blog details
+            return jsonify({'message': 'Blog title updated successfully', 'blog': blog}), 200
+        else:
+            return jsonify({'error': 'Title or author field is missing from request data'}), 400
+
+    
 
 
 
